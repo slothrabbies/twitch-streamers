@@ -1,0 +1,136 @@
+#! /usr/bin/python
+
+#   ____  __.              __                              _____ __________.___  
+#  |    |/ _|___________  |  | __ ____   ____             /  _  \\______   \   | 
+#  |      < \_  __ \__  \ |  |/ // __ \ /    \   ______  /  /_\  \|     ___/   | 
+#  |    |  \ |  | \// __ \|    <\  ___/|   |  \ /_____/ /    |    \    |   |   | 
+#  |____|__ \|__|  (____  /__|_ \\___  >___|  /         \____|__  /____|   |___| 
+#          \/           \/     \/    \/     \/                  \/               
+
+import sys
+import json
+import urllib2
+import time, os
+from colorama import Fore, Back, Style
+
+#version 1.87
+
+def check_version():
+
+	try:
+		ver = sys.version_info
+	except:
+		sys.stderr.write('ERROR: Error getting version.')
+		exit()
+	if ver >= (3 , 0) or ver < (2,7):
+		sys.stderr.write("""
+ERROR: Streamers is built for Python 2.7
+Your version is %d.%d.
+""" %(ver[0],ver[1]))
+		exit()
+check_version()
+
+
+#Some abbreviations of popular games
+GAME_TUPLE = [('League of Legends','League'),
+('Hearthstone: Heroes of Warcraft','Hearthstone'),
+('StarCraft II: Heart of the Swarm','Starcraft 2'),
+('Counter-Strike: Global Offensive','CS:GO'),
+('World of Warcraft','WoW'),
+('World of Warcraft: Mists of Pandaria','WoW'),
+('The Elder Scrolls V: Skyrim','Skyrim')
+]
+
+#some shortenings of popular streamers
+STREAMER_TUPLE = [('CLGDoublelift','Doublelift'),
+('RyanChoiLoL','Ryan Choi'),
+('LoLGeranimo','Geranimo'),
+('flosd','BoxBox'),
+('Trick2g','Trick'),
+('eventlol','Event'),
+('PhreakStream','Phreak'),
+('CosmoWright','Cosmo'),
+('PJDiCesare','PJ'),
+('OnGameNet','OGN'),
+('Riot Games','Rito'),
+('TSM_Bjergsen','Bjerg'),
+('SpeedDemosArchiveSDA','GDQ'),
+('AmazHS','Amaz'),
+('paiNKami','Kami'),
+('imaqtpie','qtpie')
+]
+
+def API():
+#Uses the API from twitch.tv to display the top 25 streams
+	
+	baseURL = "https://api.twitch.tv/kraken/streams" 
+
+	req = urllib2.Request(baseURL)
+	req.add_header('Accept', 'application/vnd.twitchtv.v2+json')
+	result = urllib2.urlopen(req)
+	js = json.load(result)
+
+	stream = js['streams']
+	Format(stream)
+
+def Format(stream):
+# Formats the json data to a readable format
+
+	refresh_rate = 0.3
+	entry = 0
+	os.system("clear")
+	top = [] 
+
+	print(Fore.BLACK + Back.YELLOW + '*{:4s}  {:15s} {:15s}   {:8s}'.format('','Game', 'Streamer', 'Viewers'))
+	for name in stream:
+		try: 
+			entry += 1
+			game = name['game']
+
+			for item in GAME_TUPLE:
+				if game == item[0]:
+					game = item[1]
+
+			streamer = name['channel']['display_name']
+			streamerd = name['channel']['name']
+
+			for item in STREAMER_TUPLE:
+				if streamer == item[0]:
+					streamer = item[1]
+
+			views = name['viewers']
+			status = name['channel']['status']
+
+			#it is possible for kraken to return a None for game
+			if game != None:
+				game = game[:12]
+			streamer = streamer[:13]
+
+			print(Fore.YELLOW + Back.RESET + '|{:2d}| {:15s}| {:16s} => {:4d}'.format(entry, game, streamer, views))
+			
+			top.append(streamerd)
+				
+		except (KeyboardInterrupt, SystemExit):
+			pass
+
+
+	try:
+		time.sleep(refresh_rate)
+		API()
+
+	except (KeyboardInterrupt, SystemExit):
+		pass
+		ID = raw_input(Fore.CYAN + "\nPlay Live Stream #" + Fore.YELLOW)
+		ID = int(ID)
+		play = top[ID-1]
+		live(play)
+
+def live(play):
+	stream = 'livestreamer twitch.tv/'+play+' high'	
+	print "Playing,",play,"'s stream"
+	os.system(stream)
+	API()
+
+
+
+API()
